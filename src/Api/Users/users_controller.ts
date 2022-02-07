@@ -124,7 +124,7 @@ export const setPassword = async (
 ) => {
     try {
         const { db } = req.app.locals;
-        let { success, message } = await service.setPassword(db, req.body.number, req.body.otp, req.body.password)
+        let { success, message } = await service.setPassword(db, req.body.number, req.body.otp, req.body.password, req.body.onboard)
         if (success) {
             res.status(200).send({
                 message: message
@@ -152,11 +152,12 @@ export const login = async (
 ) => {
     try {
         const { db } = req.app.locals;
-        let { success, message, token} = await service.login(db, req.body.number, req.body.password)
+        let { success, message, token, status} = await service.login(db, req.body.number, req.body.password)
         if (success) {
             res.status(200).send({
                 message: message,
-                token:token
+                token:token,
+                user_status:status
             })
         }
         else {
@@ -176,10 +177,101 @@ export const login = async (
 }
 
 export const verify =async(
-    req:Request,
+    req:any,
     res:Response
 )=>{
     res.status(200).send({
-        message:'Valid User'
+        message:'Valid User',
+        user_status: req.user.status
     })
+}
+
+export const updatePersonalInfo = async(
+    req:any,
+    res:Response
+)=>{
+    try {
+        const { db } = req.app.locals;
+        let message = await service.updatePersonalInfo(db, req.user._id ,req.body.personalInfo, req.body.onboard)
+        res.status(200).send({
+            message: message
+        })
+    }
+    catch (e: any) {
+        console.log(e)
+        res.status(e.status || 500).send({
+            status: e.status || 500,
+            code: e.status ? e.code : 'UNKNOWN_ERROR',
+            error: e.status ? e.message : 'Something went wrong'
+        });
+    }
+}
+
+
+export const fetchPersonalInfo = async(
+    req:any,
+    res:Response
+)=>{
+    try{
+        const { db } = req.app.locals;
+        let personalInfo = await service.fetchPersonalInfo(db, req.user._id)
+        res.status(200).send({
+            message: 'Personal Info Retrieved',
+            data:personalInfo
+        })
+    }
+    catch (e: any) {
+        console.log(e)
+        res.status(e.status || 500).send({
+            status: e.status || 500,
+            code: e.status ? e.code : 'UNKNOWN_ERROR',
+            error: e.status ? e.message : 'Something went wrong'
+        });
+    }   
+}
+
+
+export const updateCollegeInfo = async(
+    req:any,
+    res:Response
+)=>{
+    try{
+        const { db } = req.app.locals;
+        let personalInfo = await service.updateCollegeInfo(db, req.user._id, req.body.collegeInfo,req.body.onboard);
+        res.status(200).send({
+            message: 'Personal Info Retrieved',
+            data:personalInfo
+        })
+    }
+    catch (e: any) {
+        console.log(e)
+        res.status(e.status || 500).send({
+            status: e.status || 500,
+            code: e.status ? e.code : 'UNKNOWN_ERROR',
+            error: e.status ? e.message : 'Something went wrong'
+        });
+    }   
+}
+
+
+export const fetchCollegeInfo = async(
+    req:any,
+    res:Response
+)=>{
+    try{
+        const { db } = req.app.locals;
+        let collegeInfo = await service.fetchCollegeInfo(db, req.user._id)
+        res.status(200).send({
+            message: 'College Info Retrieved',
+            data:collegeInfo
+        })
+    }
+    catch (e: any) {
+        console.log(e)
+        res.status(e.status || 500).send({
+            status: e.status || 500,
+            code: e.status ? e.code : 'UNKNOWN_ERROR',
+            error: e.status ? e.message : 'Something went wrong'
+        });
+    }   
 }

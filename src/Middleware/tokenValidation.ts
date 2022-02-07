@@ -1,12 +1,12 @@
 import jwt from 'jsonwebtoken'
 import { ObjectIdWithErrorHandler } from "../Mongodb/helpers";
-import { COL } from '../Mongodb/Collections';
 import envVars from '../Config/envconfig';
 import moment from 'moment';
 
 
 export default async (
-    req: any
+    req: any,
+    Collection:any
 ) => {
     const { db } = req.app.locals
     if (!req.header('Authorization')) {
@@ -19,23 +19,36 @@ export default async (
     const token = req.header('Authorization').replace('Bearer ', '')
     try {
         const data: any = jwt.verify(token, envVars.AUTH_SECRET);
-        const user = await db.collection(COL.Users)
-            .findOne({ _id: ObjectIdWithErrorHandler(data._id) })
+        const user = await db.collection(Collection)
+            .findOne(
+                { _id: ObjectIdWithErrorHandler(data._id)},
+                { projection :{_id:1, token_validity:1, blocked:1, status:1}}
+            );
         if (user) {
-            if (moment(user.token_validity, 'MM:DD:YYYY HH:mm:ss:SS').isAfter(moment())) {
-                await db.collection(COL.Users).findOneAndUpdate(
-                    { _id: user._id },
-                    { $set: { token_validity: moment().add(7, 'days').format('MM:DD:YYYY HH:mm:ss:SS') } }
-                )
-                return (user);
-            }
-            else {
+            if(user.blocked){
                 throw {
                     status: 401,
                     code: "PROTECTED ROUTE",
-                    message: "Token Expired please login again."
+                    message: "User has been blocked"
                 };
             }
+            else{
+                if (moment(user.token_validity, 'MM:DD:YYYY HH:mm:ss:SS').isAfter(moment())) {
+                    await db.collection(Collection).findOneAndUpdate(
+                        { _id: user._id },
+                        { $set: { token_validity: moment().add(7, 'days').format('MM:DD:YYYY HH:mm:ss:SS') } }
+                    )
+                    return (user);
+                }
+                else {
+                    throw {
+                        status: 401,
+                        code: "PROTECTED ROUTE",
+                        message: "Token Expired please login again."
+                    };
+                }
+            }
+            
 
         }
         else {

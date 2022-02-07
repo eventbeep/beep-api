@@ -7,7 +7,11 @@ import {
     setPassword,
     resetPasswordOTP,
     login,
-    verify
+    verify,
+    updatePersonalInfo,
+    fetchPersonalInfo,
+    updateCollegeInfo,
+    fetchCollegeInfo
 } from './users_controller'
 
 const router = express.Router();
@@ -18,7 +22,10 @@ router.post('/verifyOTP',verifyOTP);
 router.post('/resendOTP',resendOTP);
 router.post('/resetPasswordOTP',resetPasswordOTP);
 router.post('/setPassword',setPassword);
-router.post('/login',login)
-
+router.post('/login',login);
+router.post('/personalInfo',auth(),updatePersonalInfo);
+router.get('/personalInfo',auth(),fetchPersonalInfo);
+router.post('/collegeInfo',auth(),updateCollegeInfo);
+router.get('/collegeInfo',auth(),fetchCollegeInfo)
 
 export default router;

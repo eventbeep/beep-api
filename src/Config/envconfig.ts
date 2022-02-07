@@ -9,7 +9,9 @@ const envVarsSchema = Joi.object()
         MONGODBSRV: Joi.string().uri().description('Mongo Db Connection String'),
         SALTROUND: Joi.number().description("Salt rounds for Hashing"),
         MSG91_AUTH_KEY: Joi.string().description("MSG91 Auth Key"),
-        AUTH_SECRET: Joi.string().description("Auth Token Key")
+        AUTH_SECRET: Joi.string().description("Auth Token Key"),
+        AWS_SECRET_ACCESS_KEY: Joi.string().description("AWS Secret Key"),
+        AWS_ACCESS_KEY: Joi.string().description("AWS Access Key")
     })
 
 const { value: envVars, error } = envVarsSchema.prefs({ errors: { label: 'key' } }).validate(process.env);

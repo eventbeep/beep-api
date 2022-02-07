@@ -2,10 +2,10 @@ import { Response, NextFunction} from 'express';
 import { COL } from '../Mongodb/Collections';
 import tokenValidation from './tokenValidation';
 
-const auth =()=>{
+const adminauth =()=>{
     return async(req: any, res:Response,next:NextFunction): Promise<any>=>{
         try{
-            const userData=await tokenValidation(req,COL.Users);
+            const userData=await tokenValidation(req,COL.AdminUsers);
             req.user=userData;
             next();
         }
@@ -21,4 +21,4 @@ const auth =()=>{
 }
 
 
-export default auth;
+export default adminauth;

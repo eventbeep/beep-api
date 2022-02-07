@@ -1,3 +1,5 @@
+import envVars from "../Config/envconfig";
+
 export const generateOTP = async (
     otpLength: number
 ) => {
@@ -15,5 +17,6 @@ export const sendSMS = async (
     message: string
 )=>{
     //need to add MSG91 logic to send sms
+    
     console.log(message)
 }
