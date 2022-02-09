@@ -15,37 +15,27 @@ const sendOTP = async (
     const user = await db.collection(COL.Users).findOne({
         phone_number: number
     })
+    const otp = await generateOTP(4);
+    await sendSMS(number, `OTP for login ${otp}`)
     if (user) {
-        if (user.status === 'OTP Verification') {
-            const otp = user.otp
-            await sendSMS(number, `OTP for login ${otp}`)
-            return {
-                success: true,
-                message: 'OTP sent successfully'
-            };
-        }
-        else {
-            return {
-                success: false,
-                message: `Mobile Number ${number} is alerady registered.`
-            };
-        }
-
+        await db.collection(COL.Users).findOneAndUpdate(
+            {_id:user._id},
+            {$set : {otp:otp}}
+        )
     }
-    else {
-        const otp = await generateOTP(4);
-        await sendSMS(number, `OTP for login ${otp}`)
+    else { 
         await db.collection(COL.Users).insertOne({
             phone_number: number,
             otp: otp,
             status: 'OTP Verification',
             blocked: false
         })
-        return {
-            success: true,
-            message: 'OTP sent successfully'
-        };
     }
+    
+    return {
+        success: true,
+        message: 'OTP sent successfully'
+    };
 }
 
 
@@ -59,22 +49,29 @@ const verifyOTP = async (
     })
     if (user) {
         if (otp === user.otp) {
+            await db.collection(COL.Users)
+            .findOneAndUpdate(
+                { _id: user._id },
+                { $set: { token_validity: moment().add(7, 'days').format('MM:DD:YYYY HH:mm:ss:SS') } })
             return ({
                 success: true,
-                message: 'OTP Verified'
+                message: 'OTP Verified',
+                token: jwt.sign(JSON.stringify({ _id: user._id }), envVars.AUTH_SECRET)
             })
         }
         else {
             return ({
                 success: false,
-                message: 'Invalid OTP'
+                message: 'Invalid OTP',
+                token:''
             })
         }
     }
     else {
         return ({
             success: false,
-            message: `No user with Mobile number ${number} exists}`
+            message: `No user with Mobile number ${number} exists}`,
+            token:''
         })
     }
 }
@@ -102,6 +99,7 @@ const resendOTP = async (
     }
 
 }
+
 
 
 const updatePersonalInfo = async (
