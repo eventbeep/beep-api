@@ -8,7 +8,10 @@ import {
     updatePersonalInfo,
     fetchPersonalInfo,
     updateCollegeInfo,
-    fetchCollegeInfo
+    fetchCollegeInfo,
+    followUser,
+    unFollowUser,
+    fetchUserInfo
 } from './users_controller'
 
 const router = express.Router();
@@ -21,5 +24,8 @@ router.post('/personalInfo',auth(),updatePersonalInfo);
 router.get('/personalInfo',auth(),fetchPersonalInfo);
 router.post('/collegeInfo',auth(),updateCollegeInfo);
 router.get('/collegeInfo',auth(),fetchCollegeInfo)
+router.get('/follow',auth(),followUser)
+router.get('/unfollow',auth(),unFollowUser)
+router.get('/UserInfo',auth(),fetchUserInfo)
 
 export default router;

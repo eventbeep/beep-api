@@ -1,7 +1,7 @@
 import { Db, ObjectId } from "mongodb";
 import { generateOTP, sendSMS } from "../service";
 import { COL } from '../../Mongodb/Collections';
-import bcrypt from 'bcrypt';
+import _ from 'lodash';
 import jwt from 'jsonwebtoken';
 import envVars from "../../Config/envconfig";
 import moment from 'moment';
@@ -27,6 +27,9 @@ const sendOTP = async (
         await db.collection(COL.Users).insertOne({
             phone_number: number,
             otp: otp,
+            followers:[],
+            following:[],
+            public:false,
             status: 'OTP Verification',
             blocked: false
         })
@@ -191,6 +194,67 @@ const fetchCollegeInfo = async (
     return collegeInfo
 }
 
+
+const followUser = async(
+    db:Db,
+    userId:ObjectId,
+    tofollowId:ObjectId
+)=>{
+    await db.collection(COL.Users).updateOne(
+        { _id: tofollowId }, { $push: { followers: userId } }
+    )
+    await db.collection(COL.Users).updateOne(
+        { _id: userId }, { $push: { following: tofollowId } }
+    )
+}
+
+const unFollowUser = async(
+    db:Db,
+    userId:ObjectId,
+    tofollowId:ObjectId
+)=>{
+    await db.collection(COL.Users).updateOne(
+        { _id: tofollowId }, { $pull: { followers: userId } }
+    )
+    await db.collection(COL.Users).updateOne(
+        { _id: userId }, { $pull: { following: tofollowId } }
+    )
+}
+
+
+const fetchUserInfo = async(
+    db:Db,
+    reqUser: ObjectId,
+    targetUser: ObjectId
+)=>{
+    let targetUserData:any=await db.collection(COL.Users).findOne(
+        {_id:targetUser},
+        {projection: {_id:0,personalInfo:1,followers:1,following:1,public:1}}
+    )
+    targetUserData.posts=[]
+    targetUserData.followed = false
+    let reqUserString= reqUser.toString()
+    for(let index=0; index<targetUserData.followers.length; index++){
+        if( targetUserData.followers.toString()===reqUserString){
+            targetUserData.followed = true;
+            break;
+        }
+    }
+    if(targetUserData.public || targetUserData.followed){
+        const posts = await db.collection(COL.Posts).find(
+            {postedBy:targetUser}
+        ).sort({_id:-1}).limit(10).toArray();
+        targetUserData.posts = posts
+    }
+
+    
+    targetUserData.followers = targetUserData.followers.length
+    targetUserData.following = targetUserData.following.length
+
+    return targetUserData
+}
+
+
 export default {
     sendOTP,
     verifyOTP,
@@ -198,5 +262,8 @@ export default {
     updatePersonalInfo,
     fetchPersonalInfo,
     updateCollegeInfo,
-    fetchCollegeInfo
+    fetchCollegeInfo,
+    followUser,
+    unFollowUser,
+    fetchUserInfo
 };

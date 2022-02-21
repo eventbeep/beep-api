@@ -1,116 +1,39 @@
-import { Response, Request } from 'express';
+import { Response } from 'express';
 import { ObjectIdWithErrorHandler } from '../../Mongodb/helpers';
-import service from './users_service'
+import service from './wall_service'
+
+// export const fetchWallPosts = async (
+//     req: any,
+//     res: Response
+// ) => {
+//     try {
+//         const { db } = req.app.locals;
+//         let posts = await service.sendOTP(db, req.body.number)
+//         res.status(200).send({
+//             message: 'Post retrived',
+//             data: posts
+//         })
+//     }
+//     catch (e: any) {
+//         console.log(e)
+//         res.status(e.status || 500).send({
+//             status: e.status || 500,
+//             code: e.status ? e.code : 'UNKNOWN_ERROR',
+//             error: e.status ? e.message : 'Something went wrong'
+//         });
+//     }
+// }
 
 
-export const sendOTP = async (
-    req: Request,
-    res: Response
-) => {
-    try {
-        const { db } = req.app.locals;
-        let { success, message } = await service.sendOTP(db, req.body.number)
-        if (success) {
-            res.status(200).send({
-                message: message
-            })
-        }
-        else {
-            res.status(400).send({
-                message: message
-            })
-        }
-    }
-    catch (e: any) {
-        console.log(e)
-        res.status(e.status || 500).send({
-            status: e.status || 500,
-            code: e.status ? e.code : 'UNKNOWN_ERROR',
-            error: e.status ? e.message : 'Something went wrong'
-        });
-    }
-}
-
-
-export const verifyOTP = async (
-    req: Request,
-    res: Response
-) => {
-    try {
-        const { db } = req.app.locals;
-        let { success, message, token } = await service.verifyOTP(db, req.body.number, req.body.otp)
-        if (success) {
-            res.status(200).send({
-                message: message,
-                token:token
-            })
-        }
-        else {
-            res.status(400).send({
-                message: message
-            })
-        }
-    }
-    catch (e: any) {
-        console.log(e)
-        res.status(e.status || 500).send({
-            status: e.status || 500,
-            code: e.status ? e.code : 'UNKNOWN_ERROR',
-            error: e.status ? e.message : 'Something went wrong'
-        });
-    }
-}
-
-
-export const resendOTP = async (
-    req: Request,
-    res: Response
-) => {
-    try {
-        const { db } = req.app.locals;
-        let { success, message } = await service.resendOTP(db, req.body.number)
-        if (success) {
-            res.status(200).send({
-                message: message
-            })
-        }
-        else {
-            res.status(400).send({
-                message: message
-            })
-        }
-    }
-    catch (e: any) {
-        console.log(e)
-        res.status(e.status || 500).send({
-            status: e.status || 500,
-            code: e.status ? e.code : 'UNKNOWN_ERROR',
-            error: e.status ? e.message : 'Something went wrong'
-        });
-    }
-}
-
-
-
-export const verify =async(
-    req:any,
-    res:Response
-)=>{
-    res.status(200).send({
-        message:'Valid User',
-        user_status: req.user.status
-    })
-}
-
-export const updatePersonalInfo = async(
-    req:any,
+export const createPost = async(
+    req: any,
     res:Response
 )=>{
     try {
         const { db } = req.app.locals;
-        let message = await service.updatePersonalInfo(db, req.user._id ,req.body.personalInfo, req.body.onboard)
+        await service.createPost(db, req.body ,req.user._id,req.file)
         res.status(200).send({
-            message: message
+            message: 'Post created',
         })
     }
     catch (e: any) {
@@ -124,16 +47,15 @@ export const updatePersonalInfo = async(
 }
 
 
-export const fetchPersonalInfo = async(
-    req:any,
+export const createChallenge = async(
+    req: any,
     res:Response
 )=>{
-    try{
+    try {
         const { db } = req.app.locals;
-        let personalInfo = await service.fetchPersonalInfo(db, req.user._id)
+        await service.createChallenge(db, req.body ,req.user._id,req.file)
         res.status(200).send({
-            message: 'Personal Info Retrieved',
-            data:personalInfo
+            message: 'Post created',
         })
     }
     catch (e: any) {
@@ -143,20 +65,40 @@ export const fetchPersonalInfo = async(
             code: e.status ? e.code : 'UNKNOWN_ERROR',
             error: e.status ? e.message : 'Something went wrong'
         });
-    }   
+    }
+}
+
+export const deletePost = async(
+    req: any,
+    res:Response
+)=>{
+    try {
+        const { db } = req.app.locals;
+        await service.deletePost(db,req.user._id,ObjectIdWithErrorHandler(req.query.id))
+        res.status(200).send({
+            message: 'Post deleted',
+        })
+    }
+    catch (e: any) {
+        console.log(e)
+        res.status(e.status || 500).send({
+            status: e.status || 500,
+            code: e.status ? e.code : 'UNKNOWN_ERROR',
+            error: e.status ? e.message : 'Something went wrong'
+        });
+    }
 }
 
 
-export const updateCollegeInfo = async(
-    req:any,
+export const likePost = async(
+    req: any,
     res:Response
 )=>{
-    try{
+    try {
         const { db } = req.app.locals;
-        let personalInfo = await service.updateCollegeInfo(db, req.user._id, req.body.collegeInfo,req.body.onboard);
+        await service.likePost(db,req.user._id,ObjectIdWithErrorHandler(req.query.id))
         res.status(200).send({
-            message: 'Personal Info Retrieved',
-            data:personalInfo
+            message: 'Post Liked',
         })
     }
     catch (e: any) {
@@ -166,20 +108,19 @@ export const updateCollegeInfo = async(
             code: e.status ? e.code : 'UNKNOWN_ERROR',
             error: e.status ? e.message : 'Something went wrong'
         });
-    }   
+    }
 }
 
 
-export const fetchCollegeInfo = async(
-    req:any,
+export const addComment = async(
+    req: any,
     res:Response
 )=>{
-    try{
+    try {
         const { db } = req.app.locals;
-        let collegeInfo = await service.fetchCollegeInfo(db, req.user._id)
+        await service.addComment(db,req.user._id,req.body)
         res.status(200).send({
-            message: 'College Info Retrieved',
-            data:collegeInfo
+            message: 'Comment Added',
         })
     }
     catch (e: any) {
@@ -189,19 +130,19 @@ export const fetchCollegeInfo = async(
             code: e.status ? e.code : 'UNKNOWN_ERROR',
             error: e.status ? e.message : 'Something went wrong'
         });
-    }   
+    }
 }
 
 
-export const followUser = async(
-    req:any,
+export const editComment = async(
+    req: any,
     res:Response
 )=>{
-    try{
+    try {
         const { db } = req.app.locals;
-        await service.followUser(db, req.user._id,ObjectIdWithErrorHandler(req.query.id))
+        await service.editComment(db,req.user._id,req.body)
         res.status(200).send({
-            message: 'Followed User Successfully',
+            message: 'Comment Edited',
         })
     }
     catch (e: any) {
@@ -211,19 +152,19 @@ export const followUser = async(
             code: e.status ? e.code : 'UNKNOWN_ERROR',
             error: e.status ? e.message : 'Something went wrong'
         });
-    }   
+    }
 }
 
 
-export const unFollowUser = async(
-    req:any,
+export const deleteComment = async(
+    req: any,
     res:Response
 )=>{
-    try{
+    try {
         const { db } = req.app.locals;
-        await service.unFollowUser(db, req.user._id,ObjectIdWithErrorHandler(req.query.id))
+        await service.deleteComment(db,req.user._id,ObjectIdWithErrorHandler(req.query.postId),parseInt(req.query.commentId))
         res.status(200).send({
-            message: 'Un-Followed User Successfully',
+            message: 'Comment Deleted',
         })
     }
     catch (e: any) {
@@ -233,19 +174,19 @@ export const unFollowUser = async(
             code: e.status ? e.code : 'UNKNOWN_ERROR',
             error: e.status ? e.message : 'Something went wrong'
         });
-    }   
+    }
 }
 
-export const fetchUserInfo = async(
-    req:any,
+
+export const addCommentThread = async(
+    req: any,
     res:Response
 )=>{
-    try{
+    try {
         const { db } = req.app.locals;
-        let userInfo = await service.fetchUserInfo(db, req.user._id,ObjectIdWithErrorHandler(req.query.id))
+        await service.addCommentThread(db,req.user._id,req.body)
         res.status(200).send({
-            message: 'User Info Retrieved',
-            data:userInfo
+            message: 'Comment Thread Added',
         })
     }
     catch (e: any) {
@@ -255,5 +196,49 @@ export const fetchUserInfo = async(
             code: e.status ? e.code : 'UNKNOWN_ERROR',
             error: e.status ? e.message : 'Something went wrong'
         });
-    }   
+    }
+}
+
+
+export const editCommentThread = async(
+    req: any,
+    res:Response
+)=>{
+    try {
+        const { db } = req.app.locals;
+        await service.editCommentThread(db,req.user._id,req.body)
+        res.status(200).send({
+            message: 'Comment Thread Edited',
+        })
+    }
+    catch (e: any) {
+        console.log(e)
+        res.status(e.status || 500).send({
+            status: e.status || 500,
+            code: e.status ? e.code : 'UNKNOWN_ERROR',
+            error: e.status ? e.message : 'Something went wrong'
+        });
+    }
+}
+
+
+export const deleteCommentThread = async(
+    req: any,
+    res:Response
+)=>{
+    try {
+        const { db } = req.app.locals;
+        await service.deleteCommentThread(db,req.user._id,ObjectIdWithErrorHandler(req.query.postId),parseInt(req.query.commentId),parseInt(req.query.threadCommentId))
+        res.status(200).send({
+            message: 'Comment Thread Deleted',
+        })
+    }
+    catch (e: any) {
+        console.log(e)
+        res.status(e.status || 500).send({
+            status: e.status || 500,
+            code: e.status ? e.code : 'UNKNOWN_ERROR',
+            error: e.status ? e.message : 'Something went wrong'
+        });
+    }
 }
