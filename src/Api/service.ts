@@ -16,26 +16,16 @@ export const sendSMS = async (
   templateId: string,
   data: any
 ) => {
-  //need to add MSG91 logic to send sms
-
-  try {
-    const headers = {
-      "Content-Type": "application/json",
-      authKey: envVars.MSG91_AUTH_KEY,
-    };
-    const body = JSON.stringify({
-      flow_id: templateId,
-      ...data,
-    });
-    const response = await axios.post(
-      "https://api.msg91.com/api/v5/flow",
-      body,
-      { headers }
-    );
-    return response.data;
-  } catch (error) {
-    // throw error.response
-    //   ? new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.response.data)
-    //   : new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Msg91 send SMS failed");
-  }
+  const headers = {
+    "Content-Type": "application/json",
+    authKey: envVars.MSG91_AUTH_KEY,
+  };
+  const body = JSON.stringify({
+    flow_id: templateId,
+    ...data,
+  });
+  const response = await axios.post("https://api.msg91.com/api/v5/flow", body, {
+    headers,
+  });
+  return response.data;
 };

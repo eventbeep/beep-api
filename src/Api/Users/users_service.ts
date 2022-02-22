@@ -77,7 +77,7 @@ const resendOTP = async (db: Db, number: string) => {
     phone_number: number,
   });
   if (user) {
-    await sendSMS(number, `OTP for login ${user.otp}`);
+    await sendSMS(number, "6210fa7623afcc3d1627edd4", { otp: user.otp });
     return {
       success: true,
       message: "OTP Resent",
