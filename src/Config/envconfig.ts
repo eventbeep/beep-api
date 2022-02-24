@@ -1,20 +1,17 @@
 import 'dotenv/config';
 import Joi from 'joi';
 
-
-const envVarsSchema = Joi.object()
-    .keys({
-        PORT: Joi.number().default(3000).description('PORT for API Endpoint'),
-        NODE_ENV: Joi.string().default('development').description('Running Node Env'),
-        MONGODBSRV: Joi.string().uri().description('Mongo Db Connection String'),
-        SALTROUND: Joi.number().description("Salt rounds for Hashing"),
-        MSG91_AUTH_KEY: Joi.string().description("MSG91 Auth Key"),
-        AUTH_SECRET: Joi.string().description("Auth Token Key"),
-        AWS_SECRET_ACCESS_KEY: Joi.string().description("AWS Secret Key"),
-        AWS_ACCESS_KEY: Joi.string().description("AWS Access Key")
-    })
+const envVarsSchema = Joi.object().keys({
+  PORT: Joi.number().default(3000).description('PORT for API Endpoint'),
+  NODE_ENV: Joi.string().default('development').description('Running Node Env'),
+  MONGODBSRV: Joi.string().uri().description('Mongo Db Connection String'),
+  SALTROUND: Joi.number().description('Salt rounds for Hashing'),
+  MSG91_AUTH_KEY: Joi.string().description('MSG91 Auth Key'),
+  AUTH_SECRET: Joi.string().description('Auth Token Key'),
+  AWS_SECRET_ACCESS_KEY: Joi.string().description('AWS Secret Key'),
+  AWS_ACCESS_KEY: Joi.string().description('AWS Access Key'),
+});
 
 const { value: envVars, error } = envVarsSchema.prefs({ errors: { label: 'key' } }).validate(process.env);
 
-
-export default envVars
+export default envVars;
