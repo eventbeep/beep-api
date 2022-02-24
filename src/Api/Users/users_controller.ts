@@ -5,7 +5,7 @@ import service from './users_service';
 export const sendOTP = async (req: Request, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message } = await service.sendOTP(db, req.body.number);
+    const { success, message } = await service.sendOTP(db, req.body.number);
     if (success) {
       res.status(200).send({
         message: message,
@@ -28,7 +28,7 @@ export const sendOTP = async (req: Request, res: Response) => {
 export const verifyOTP = async (req: Request, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message, token } = await service.verifyOTP(db, req.body.number, req.body.otp);
+    const { success, message, token } = await service.verifyOTP(db, req.body.number, req.body.otp);
     if (success) {
       res.status(200).send({
         message: message,
@@ -52,7 +52,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
 export const resendOTP = async (req: Request, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message } = await service.resendOTP(db, req.body.number);
+    const { success, message } = await service.resendOTP(db, req.body.number);
     if (success) {
       res.status(200).send({
         message: message,
@@ -82,7 +82,7 @@ export const verify = async (req: any, res: Response) => {
 export const updatePersonalInfo = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let message = await service.updatePersonalInfo(db, req.user._id, req.body.personalInfo, req.body.onboard);
+    const message = await service.updatePersonalInfo(db, req.user._id, req.body.personalInfo, req.body.onboard);
     res.status(200).send({
       message: message,
     });
@@ -99,7 +99,7 @@ export const updatePersonalInfo = async (req: any, res: Response) => {
 export const fetchPersonalInfo = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let personalInfo = await service.fetchPersonalInfo(db, req.user._id);
+    const personalInfo = await service.fetchPersonalInfo(db, req.user._id);
     res.status(200).send({
       message: 'Personal Info Retrieved',
       data: personalInfo,
@@ -117,7 +117,7 @@ export const fetchPersonalInfo = async (req: any, res: Response) => {
 export const updateCollegeInfo = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let personalInfo = await service.updateCollegeInfo(db, req.user._id, req.body.collegeInfo, req.body.onboard);
+    const personalInfo = await service.updateCollegeInfo(db, req.user._id, req.body.collegeInfo, req.body.onboard);
     res.status(200).send({
       message: 'Personal Info Retrieved',
       data: personalInfo,
@@ -135,7 +135,7 @@ export const updateCollegeInfo = async (req: any, res: Response) => {
 export const fetchCollegeInfo = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let collegeInfo = await service.fetchCollegeInfo(db, req.user._id);
+    const collegeInfo = await service.fetchCollegeInfo(db, req.user._id);
     res.status(200).send({
       message: 'College Info Retrieved',
       data: collegeInfo,
@@ -187,7 +187,7 @@ export const unFollowUser = async (req: any, res: Response) => {
 export const fetchUserInfo = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let userInfo = await service.fetchUserInfo(db, req.user._id, ObjectIdWithErrorHandler(req.query.id));
+    const userInfo = await service.fetchUserInfo(db, req.user._id, ObjectIdWithErrorHandler(req.query.id));
     res.status(200).send({
       message: 'User Info Retrieved',
       data: userInfo,

@@ -120,7 +120,7 @@ const fetchCollegeInfo = async (db: Db, userId: ObjectId) => {
   let collegeInfo: any = await db.collection(COL.Users).findOne({ _id: userId }, { projection: { _id: 0, collegeInfo: 1 } });
   collegeInfo = collegeInfo['collegeInfo'];
   if (collegeInfo['requestId']) {
-    let request: any = await db
+    const request: any = await db
       .collection(COL.Requests)
       .findOne({ _id: collegeInfo['requestId'] }, { projection: { _id: 0, type: 0, raisedBy: 0 } });
     if (request['collegeId']) {
@@ -155,7 +155,7 @@ const unFollowUser = async (db: Db, userId: ObjectId, tofollowId: ObjectId) => {
 };
 
 const fetchUserInfo = async (db: Db, reqUser: ObjectId, targetUser: ObjectId) => {
-  let targetUserData: any = await db.collection(COL.Users).findOne(
+  const targetUserData: any = await db.collection(COL.Users).findOne(
     { _id: targetUser },
     {
       projection: {
@@ -169,7 +169,7 @@ const fetchUserInfo = async (db: Db, reqUser: ObjectId, targetUser: ObjectId) =>
   );
   targetUserData.posts = [];
   targetUserData.followed = false;
-  let reqUserString = reqUser.toString();
+  const reqUserString = reqUser.toString();
   for (let index = 0; index < targetUserData.followers.length; index++) {
     if (targetUserData.followers.toString() === reqUserString) {
       targetUserData.followed = true;

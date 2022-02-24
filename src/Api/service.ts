@@ -2,10 +2,10 @@ import axios from 'axios';
 import envVars from '../Config/envconfig';
 
 export const generateOTP = async (otpLength: number) => {
-  var digits = '0123456789';
+  const digits = '0123456789';
   let otp = '';
   for (let i = 1; i <= otpLength; i++) {
-    var index = Math.floor(Math.random() * digits.length);
+    const index = Math.floor(Math.random() * digits.length);
     otp = otp + digits[index];
   }
   return otp;

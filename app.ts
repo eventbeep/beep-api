@@ -44,7 +44,7 @@ if (envVars.NODE_ENV === 'development') {
     }
     cluster.on('exit', (worker, code, signal) => {
       console.log(`Worker with ${worker.process.pid} died`);
-      console.log(`Starting a new worker`);
+      console.log('Starting a new worker');
       cluster.fork();
     });
   } else {

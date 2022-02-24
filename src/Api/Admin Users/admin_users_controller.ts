@@ -4,7 +4,7 @@ import service from './admin_users_service';
 export const login = async (req: Request, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message, token } = await service.login(db, req.body.email, req.body.password);
+    const { success, message, token } = await service.login(db, req.body.email, req.body.password);
     if (success) {
       res.status(200).send({
         message: message,

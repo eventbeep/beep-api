@@ -4,7 +4,7 @@ import service from './requests_service';
 export const verificationviaEmail = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message } = await service.verificationviaEmail(db, req.user._id, req.body.email);
+    const { success, message } = await service.verificationviaEmail(db, req.user._id, req.body.email);
     if (success) {
       res.status(200).send({
         message: message,
@@ -27,7 +27,7 @@ export const verificationviaEmail = async (req: any, res: Response) => {
 export const newCollegeRequest = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let response = await service.newCollegeRequest(db, req.body, req.user._id);
+    const response = await service.newCollegeRequest(db, req.body, req.user._id);
     res.status(200).send({
       message: response,
     });
@@ -44,7 +44,7 @@ export const newCollegeRequest = async (req: any, res: Response) => {
 export const getRequests = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let request = await service.getRequests(db, req.body.index, req.body.filter);
+    const request = await service.getRequests(db, req.body.index, req.body.filter);
     res.status(200).send({
       message: 'Requests Retrieved',
       ...request,
@@ -79,7 +79,7 @@ export const updateRequest = async (req: any, res: Response) => {
 export const verifyEmail = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message } = await service.verifyEmail(db, req.query.token);
+    const { success, message } = await service.verifyEmail(db, req.query.token);
     if (success) {
       res.status(200).send({
         message: message,
@@ -102,7 +102,7 @@ export const verifyEmail = async (req: any, res: Response) => {
 export const verificationviaId = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message } = await service.verificationviaId(db, req.user._id, req.file);
+    const { success, message } = await service.verificationviaId(db, req.user._id, req.file);
     if (success) {
       res.status(200).send({
         message: message,

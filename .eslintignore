@@ -1,2 +1,6 @@
-node_modules
-bin
+# /node_modules/* in the project root is ignored by default
+# build artefacts
+dist/*
+coverage/*
+# data definition files
+**/*.d.ts

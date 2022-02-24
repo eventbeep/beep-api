@@ -159,7 +159,7 @@ const deletePost = async (db: Db, userId: ObjectId, postId: ObjectId) => {
       }
 
       if (toDelete) {
-        let toAdd: any = await db
+        const toAdd: any = await db
           .collection(COL.Posts)
           .find({ type: 'Challenge', challengeName: postInfo.challengeName })
           .sort({ likesCount: 1 })
@@ -231,15 +231,15 @@ const likePost = async (db: Db, userId: ObjectId, postId: ObjectId) => {
 };
 
 const addComment = async (db: Db, userId: ObjectId, body: any) => {
-  let postComments: any = await db
+  const postComments: any = await db
     .collection(COL.PostComments)
     .findOne({ postId: ObjectIdWithErrorHandler(body.postId) }, { projection: { commentId: 1, _id: 1 } });
 
-  let postInfo: any = await db
+  const postInfo: any = await db
     .collection(COL.Posts)
     .findOne({ _id: ObjectIdWithErrorHandler(body.postId) }, { projection: { comments: 1 } });
 
-  let comment = {
+  const comment = {
     commentId: postComments.commentId + 1,
     comment: body.comment,
     commentedBy: userId,
@@ -257,10 +257,10 @@ const addComment = async (db: Db, userId: ObjectId, body: any) => {
 };
 
 const editComment = async (db: Db, userId: ObjectId, body: any) => {
-  let postComments: any = await db
+  const postComments: any = await db
     .collection(COL.PostComments)
     .findOne({ postId: ObjectIdWithErrorHandler(body.postId) }, { projection: { commentId: 1, _id: 1, comments: 1 } });
-  let comment = postComments.comments.find((comm: any) => comm.commentId === body.commentId);
+  const comment = postComments.comments.find((comm: any) => comm.commentId === body.commentId);
   if (comment.commentedBy.toString() === userId.toString()) {
     await db.collection(COL.PostComments).updateOne({ _id: postComments._id }, { $pull: { comments: comment } });
     comment.comment = body.comment;
@@ -275,13 +275,13 @@ const editComment = async (db: Db, userId: ObjectId, body: any) => {
 };
 
 const deleteComment = async (db: Db, userId: ObjectId, postId: ObjectId, commentId: number) => {
-  let postComments: any = await db
+  const postComments: any = await db
     .collection(COL.PostComments)
     .findOne({ postId: ObjectIdWithErrorHandler(postId) }, { projection: { commentId: 1, _id: 1, comments: 1 } });
-  let comment = postComments.comments.find((comm: any) => comm.commentId === commentId);
+  const comment = postComments.comments.find((comm: any) => comm.commentId === commentId);
   if (comment.commentedBy.toString() === userId.toString()) {
     await db.collection(COL.PostComments).updateOne({ _id: postComments._id }, { $pull: { comments: comment } });
-    let postInfo: any = await db
+    const postInfo: any = await db
       .collection(COL.Posts)
       .findOne({ _id: ObjectIdWithErrorHandler(postId) }, { projection: { comments: 1 } });
     await db
@@ -297,11 +297,11 @@ const deleteComment = async (db: Db, userId: ObjectId, postId: ObjectId, comment
 };
 
 const addCommentThread = async (db: Db, userId: ObjectId, body: any) => {
-  let postComments: any = await db
+  const postComments: any = await db
     .collection(COL.PostComments)
     .findOne({ postId: ObjectIdWithErrorHandler(body.postId) }, { projection: { commentId: 1, _id: 1, comments: 1 } });
-  let comment = postComments.comments.find((comm: any) => comm.commentId === body.commentId);
-  let commentThread = {
+  const comment = postComments.comments.find((comm: any) => comm.commentId === body.commentId);
+  const commentThread = {
     commentId: comment.threadId + 1,
     comment: body.comment,
     commentedBy: userId,
@@ -315,14 +315,14 @@ const addCommentThread = async (db: Db, userId: ObjectId, body: any) => {
 };
 
 const editCommentThread = async (db: Db, userId: ObjectId, body: any) => {
-  let postComments: any = await db
+  const postComments: any = await db
     .collection(COL.PostComments)
     .findOne({ postId: ObjectIdWithErrorHandler(body.postId) }, { projection: { commentId: 1, _id: 1, comments: 1 } });
-  let comment = postComments.comments.find((comm: any) => comm.commentId === body.commentId);
-  let commentThread = comment.commentThread.find((comm: any) => comm.commentId === body.threadCommentId);
+  const comment = postComments.comments.find((comm: any) => comm.commentId === body.commentId);
+  const commentThread = comment.commentThread.find((comm: any) => comm.commentId === body.threadCommentId);
   if (commentThread.commentedBy.toString() === userId.toString()) {
     await db.collection(COL.PostComments).updateOne({ _id: postComments._id }, { $pull: { comments: comment } });
-    let threadIndex = comment.commentThread.indexOf(commentThread);
+    const threadIndex = comment.commentThread.indexOf(commentThread);
     comment.commentThread[threadIndex].comment = body.comment;
     await db.collection(COL.PostComments).updateOne({ _id: postComments._id }, { $push: { comments: comment } });
   } else {
@@ -341,14 +341,14 @@ const deleteCommentThread = async (
   commentId: number,
   threadCommentId: number
 ) => {
-  let postComments: any = await db
+  const postComments: any = await db
     .collection(COL.PostComments)
     .findOne({ postId: ObjectIdWithErrorHandler(postId) }, { projection: { commentId: 1, _id: 1, comments: 1 } });
-  let comment = postComments.comments.find((comm: any) => comm.commentId === commentId);
-  let commentThread = comment.commentThread.find((comm: any) => comm.commentId === threadCommentId);
+  const comment = postComments.comments.find((comm: any) => comm.commentId === commentId);
+  const commentThread = comment.commentThread.find((comm: any) => comm.commentId === threadCommentId);
   if (commentThread.commentedBy.toString() === userId.toString()) {
     await db.collection(COL.PostComments).updateOne({ _id: postComments._id }, { $pull: { comments: comment } });
-    let threadIndex = comment.commentThread.indexOf(commentThread);
+    const threadIndex = comment.commentThread.indexOf(commentThread);
     comment.commentThread.splice(threadIndex, 1);
     await db.collection(COL.PostComments).updateOne({ _id: postComments._id }, { $push: { comments: comment } });
   } else {

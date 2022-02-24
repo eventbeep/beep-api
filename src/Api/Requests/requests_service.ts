@@ -1,4 +1,4 @@
-import { Collection, Db, ObjectId } from 'mongodb';
+import { Db, ObjectId } from 'mongodb';
 // import re from 'regrex'
 import { COL } from '../../Mongodb/Collections';
 import { ObjectIdWithErrorHandler } from '../../Mongodb/helpers';
@@ -6,43 +6,70 @@ import jwt from 'jsonwebtoken';
 import envVars from '../../Config/envconfig';
 import aws from 'aws-sdk';
 
-const verificationviaEmail = async (db: Db, userid: ObjectId, email: string) => {
-  let emailRegex =
+const verificationviaEmail = async (
+  db: Db,
+  userid: ObjectId,
+  email: string
+) => {
+  const emailRegex =
     /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/;
-  let invalidDomains = ['yahoo.com', 'gmail.com', 'ymail.com'];
-  let userCollegeInfo: any = await db.collection(COL.Users).findOne(
+  const invalidDomains = ['yahoo.com', 'gmail.com', 'ymail.com'];
+  const userCollegeInfo: any = await db.collection(COL.Users).findOne(
     {
       $and: [
         { _id: userid },
         {
-          $or: [{ status: 'College Info Set' }, { status: 'Verification Request Declined' }],
+          $or: [
+            { status: 'College Info Set' },
+            { status: 'Verification Request Declined' },
+          ],
         },
       ],
     },
     { projection: { _id: 0, collegeInfo: 1 } }
   );
-  if (userCollegeInfo && userCollegeInfo.collegeInfo && !userCollegeInfo.collegeInfo.requestId) {
+  if (
+    userCollegeInfo &&
+    userCollegeInfo.collegeInfo &&
+    !userCollegeInfo.collegeInfo.requestId
+  ) {
     if (emailRegex.test(email)) {
       let domain: any = email.split('@');
       domain = domain[1];
       if (invalidDomains.indexOf(domain) === -1) {
         if (domain.includes('.edu')) {
-          await sendVerificationEmail(userid, email, userCollegeInfo.collegeInfo.collegeId);
-          await db.collection(COL.Users).findOneAndUpdate({ _id: userid }, { $set: { status: 'Verification Inprogress' } });
+          await sendVerificationEmail(
+            userid,
+            email,
+            userCollegeInfo.collegeInfo.collegeId
+          );
+          await db
+            .collection(COL.Users)
+            .findOneAndUpdate(
+              { _id: userid },
+              { $set: { status: 'Verification Inprogress' } }
+            );
           return {
             success: true,
             message: 'Verification Email sent',
           };
         } else {
-          let college = await db.collection(COL.Colleges).findOne({
+          const college = await db.collection(COL.Colleges).findOne({
             id: userCollegeInfo.collegeInfo.collegeId,
             domains: { $all: [domain] },
           });
           if (college) {
-            await sendVerificationEmail(userid, email, userCollegeInfo.collegeInfo.collegeId);
+            await sendVerificationEmail(
+              userid,
+              email,
+              userCollegeInfo.collegeInfo.collegeId
+            );
             await db
               .collection(COL.Users)
-              .findOneAndUpdate({ _id: userid }, { $set: { status: 'Verification Inprogress' } });
+              .findOneAndUpdate(
+                { _id: userid },
+                { $set: { status: 'Verification Inprogress' } }
+              );
             return {
               success: true,
               message: 'Verification Email sent',
@@ -59,7 +86,10 @@ const verificationviaEmail = async (db: Db, userid: ObjectId, email: string) => 
             });
             await db
               .collection(COL.Users)
-              .findOneAndUpdate({ _id: userid }, { $set: { status: 'Verification Inprogress' } });
+              .findOneAndUpdate(
+                { _id: userid },
+                { $set: { status: 'Verification Inprogress' } }
+              );
             return {
               success: true,
               message:
@@ -87,7 +117,7 @@ const verificationviaEmail = async (db: Db, userid: ObjectId, email: string) => 
   }
 };
 
-const newCollegeRequest = async (db: Db, body: any, userId: Object) => {
+const newCollegeRequest = async (db: Db, body: any, userId: any) => {
   let req: any = null;
   if (body.collegeId) {
     req = await db.collection(COL.Requests).insertOne({
@@ -114,7 +144,12 @@ const newCollegeRequest = async (db: Db, body: any, userId: Object) => {
     .collection(COL.Users)
     .findOneAndUpdate(
       { _id: userId },
-      { $set: { collegeInfo: { requestId: req.insertedId, verified: false }, status: 'New College Request' } }
+      {
+        $set: {
+          collegeInfo: { requestId: req.insertedId, verified: false },
+          status: 'New College Request',
+        },
+      }
     );
 
   return 'College/Stream Adding Request raised';
@@ -140,17 +175,20 @@ const getRequests = async (db: Db, index: number, filter: any) => {
     .limit(10)
     .toArray();
 
-  const totalRequests = await db.collection(COL.Requests).countDocuments(filter);
+  const totalRequests = await db
+    .collection(COL.Requests)
+    .countDocuments(filter);
   const s3 = new aws.S3({
     accessKeyId: envVars.AWS_ACCESS_KEY,
     secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,
     signatureVersion: 'v4',
     region: 'ap-south-1',
   });
-  let urlExpireTime = 60 * 60;
+  const urlExpireTime = 60 * 60;
   for (let index = 0; index < requests.length; index++) {
     if (requests[index]['collegeId']) {
-      requests[index]['collegeName'] = requests[index]['CollegeInfo'][0]['collegeName'];
+      requests[index]['collegeName'] =
+        requests[index]['CollegeInfo'][0]['collegeName'];
       delete requests[index]['CollegeInfo'];
       delete requests[index]['collegeId'];
     }
@@ -168,12 +206,20 @@ const getRequests = async (db: Db, index: number, filter: any) => {
   };
 };
 
-const updateRequest = async (db: Db, reqId: string, accepted: boolean, reason: string, userId: ObjectId) => {
-  const request: any = await db.collection(COL.Requests).findOne({ _id: ObjectIdWithErrorHandler(reqId) });
+const updateRequest = async (
+  db: Db,
+  reqId: string,
+  accepted: boolean,
+  reason: string,
+  userId: ObjectId
+) => {
+  const request: any = await db
+    .collection(COL.Requests)
+    .findOne({ _id: ObjectIdWithErrorHandler(reqId) });
 
   if (accepted) {
     if (request.type === 'College Addition') {
-      let req = await db.collection(COL.Colleges).insertOne({
+      const req = await db.collection(COL.Colleges).insertOne({
         collegeName: request.collegeName,
         alias: request.alias,
         streams: [request.stream],
@@ -194,7 +240,12 @@ const updateRequest = async (db: Db, reqId: string, accepted: boolean, reason: s
         }
       );
     } else if (request.type === 'Course Addition') {
-      await db.collection(COL.Colleges).updateOne({ _id: request.collegeId }, { $push: { stream: request.stream } });
+      await db
+        .collection(COL.Colleges)
+        .updateOne(
+          { _id: request.collegeId },
+          { $push: { stream: request.stream } }
+        );
 
       await db.collection(COL.Users).findOneAndUpdate(
         { _id: request.raisedBy },
@@ -211,24 +262,40 @@ const updateRequest = async (db: Db, reqId: string, accepted: boolean, reason: s
         }
       );
     } else if (request.type === 'New College Domain') {
-      await db.collection(COL.Colleges).updateOne({ _id: request.collegeId }, { $push: { domain: request.domain } });
+      await db
+        .collection(COL.Colleges)
+        .updateOne(
+          { _id: request.collegeId },
+          { $push: { domain: request.domain } }
+        );
       sendVerificationEmail(request.raisedBy, request.email, request.collegeId);
     } else if (request.type === 'College Id Verification') {
       await db
         .collection(COL.Users)
-        .updateOne({ _id: request.raisedBy }, { $set: { 'collegeInfo.verified': true, status: 'Onboarded' } });
+        .updateOne(
+          { _id: request.raisedBy },
+          { $set: { 'collegeInfo.verified': true, status: 'Onboarded' } }
+        );
     }
 
-    await db.collection(COL.Requests).findOneAndUpdate({ _id: request._id }, { $set: { status: 'Approved' } });
+    await db
+      .collection(COL.Requests)
+      .findOneAndUpdate({ _id: request._id }, { $set: { status: 'Approved' } });
   } else {
     if (request.type === 'College Id Verification') {
       await db
         .collection(COL.Users)
-        .updateOne({ _id: request.raisedBy }, { $set: { status: 'Verification Request Declined' } });
+        .updateOne(
+          { _id: request.raisedBy },
+          { $set: { status: 'Verification Request Declined' } }
+        );
     } else if (request.type === 'New College Domain') {
       await db
         .collection(COL.Users)
-        .updateOne({ _id: request.raisedBy }, { $set: { status: 'Verification Request Declined' } });
+        .updateOne(
+          { _id: request.raisedBy },
+          { $set: { status: 'Verification Request Declined' } }
+        );
     }
     await db
       .collection(COL.Requests)
@@ -239,8 +306,15 @@ const updateRequest = async (db: Db, reqId: string, accepted: boolean, reason: s
   }
 };
 
-const sendVerificationEmail = async (userid: ObjectId, email: string, collegeId: ObjectId) => {
-  let token = jwt.sign(JSON.stringify({ _id: userid, email: email, collegeId: collegeId }), envVars.AUTH_SECRET);
+const sendVerificationEmail = async (
+  userid: ObjectId,
+  email: string,
+  collegeId: ObjectId
+) => {
+  const token = jwt.sign(
+    JSON.stringify({ _id: userid, email: email, collegeId: collegeId }),
+    envVars.AUTH_SECRET
+  );
   console.log(token);
 };
 
@@ -254,16 +328,22 @@ const verifyEmail = async (db: Db, token: string) => {
       message: 'Invalid Token',
     };
   }
-  let domain = tokenData.email.split('@')[1];
+  const domain = tokenData.email.split('@')[1];
   if (domain.includes('.edu')) {
     ObjectIdWithErrorHandler;
-    let college = await db
+    const college = await db
       .collection(COL.Colleges)
-      .findOne({ _id: ObjectIdWithErrorHandler(tokenData.collegeId), domains: { $all: [domain] } });
+      .findOne({
+        _id: ObjectIdWithErrorHandler(tokenData.collegeId),
+        domains: { $all: [domain] },
+      });
     if (!college) {
       await db
         .collection(COL.Colleges)
-        .updateOne({ _id: ObjectIdWithErrorHandler(tokenData.collegeId) }, { $push: { domains: domain } });
+        .updateOne(
+          { _id: ObjectIdWithErrorHandler(tokenData.collegeId) },
+          { $push: { domains: domain } }
+        );
     }
   }
 
@@ -282,19 +362,26 @@ const verifyEmail = async (db: Db, token: string) => {
 
 const verificationviaId = async (db: Db, userid: ObjectId, file: any) => {
   if (file) {
-    let userCollegeInfo: any = await db.collection(COL.Users).findOne(
+    const userCollegeInfo: any = await db.collection(COL.Users).findOne(
       {
         $and: [
           { _id: userid },
           {
-            $or: [{ status: 'College Info Set' }, { status: 'Verification Request Declined' }],
+            $or: [
+              { status: 'College Info Set' },
+              { status: 'Verification Request Declined' },
+            ],
           },
         ],
       },
       { projection: { _id: 0, collegeInfo: 1 } }
     );
 
-    if (userCollegeInfo && userCollegeInfo.collegeInfo && !userCollegeInfo.collegeInfo.requestId) {
+    if (
+      userCollegeInfo &&
+      userCollegeInfo.collegeInfo &&
+      !userCollegeInfo.collegeInfo.requestId
+    ) {
       const s3 = new aws.S3({
         accessKeyId: envVars.AWS_ACCESS_KEY,
         secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,
@@ -308,30 +395,36 @@ const verificationviaId = async (db: Db, userid: ObjectId, file: any) => {
         Body: file.buffer,
       };
       try {
-        const resp = await new Promise<{ success: boolean; message: string }>((resolve, reject) => {
-          s3.upload(params, function (s3Err: any, data: any) {
-            if (s3Err) {
-              reject({
-                status: 500,
-                code: 'Image upload error',
-                message: 'Could not  upload the image please try again later.',
-              });
-            } else {
-              db.collection(COL.Requests).insertOne({
-                type: 'College Id Verification',
-                collegeId: userCollegeInfo.collegeInfo.collegeId,
-                raisedBy: userid,
-                status: 'Pending',
-                filename: userid.toString() + '_CollegeId.' + fileext,
-              });
-              db.collection(COL.Users).findOneAndUpdate({ _id: userid }, { $set: { status: 'Verification Inprogress' } });
-              resolve({
-                success: true,
-                message: 'Verification under Process',
-              });
-            }
-          });
-        });
+        const resp = await new Promise<{ success: boolean; message: string }>(
+          (resolve, reject) => {
+            s3.upload(params, function (s3Err: any, data: any) {
+              if (s3Err) {
+                reject({
+                  status: 500,
+                  code: 'Image upload error',
+                  message:
+                    'Could not  upload the image please try again later.',
+                });
+              } else {
+                db.collection(COL.Requests).insertOne({
+                  type: 'College Id Verification',
+                  collegeId: userCollegeInfo.collegeInfo.collegeId,
+                  raisedBy: userid,
+                  status: 'Pending',
+                  filename: userid.toString() + '_CollegeId.' + fileext,
+                });
+                db.collection(COL.Users).findOneAndUpdate(
+                  { _id: userid },
+                  { $set: { status: 'Verification Inprogress' } }
+                );
+                resolve({
+                  success: true,
+                  message: 'Verification under Process',
+                });
+              }
+            });
+          }
+        );
         return resp;
       } catch (e) {
         throw e;
