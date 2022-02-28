@@ -201,3 +201,39 @@ export const fetchUserInfo = async (req: any, res: Response) => {
     });
   }
 };
+
+export const fetchFollowRequests = async (req: any, res: Response) => {
+  try {
+    const { db } = req.app.locals;
+    let requests = await service.fetchFollowRequests(db, req.user._id, parseInt(req.query.skip));
+    res.status(200).send({
+      message: 'Follow Requests Retrieved',
+      data: requests,
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(e.status || 500).send({
+      status: e.status || 500,
+      code: e.status ? e.code : 'UNKNOWN_ERROR',
+      error: e.status ? e.message : 'Something went wrong',
+    });
+  }
+};
+
+export const updateFollowRequest = async (req: any, res: Response) => {
+  try {
+    const { db } = req.app.locals;
+    await service.updateFollowRequest(db, req.user._id, ObjectIdWithErrorHandler(req.body.id), req.body.accepted);
+
+    res.status(200).send({
+      message: 'Follow Request Updated',
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(e.status || 500).send({
+      status: e.status || 500,
+      code: e.status ? e.code : 'UNKNOWN_ERROR',
+      error: e.status ? e.message : 'Something went wrong',
+    });
+  }
+};

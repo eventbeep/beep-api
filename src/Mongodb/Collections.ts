@@ -6,4 +6,10 @@ export const COL = {
   Posts: 'Posts',
   ChallengeInfo: 'Challenge Info',
   PostComments: 'Post Comments',
+  Followers: 'Followers',
+  CommentThreads: '',
+  Likes: 'Post Likes',
+  FollowRequests: 'Follow Requests',
+  PostCounts: 'Post Counts',
+  PostLikes: 'Post Likes',
 };

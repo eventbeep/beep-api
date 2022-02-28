@@ -12,6 +12,8 @@ import {
   followUser,
   unFollowUser,
   fetchUserInfo,
+  fetchFollowRequests,
+  updateFollowRequest,
 } from './users_controller';
 
 const router = express.Router();
@@ -27,5 +29,7 @@ router.get('/collegeInfo', auth(), fetchCollegeInfo);
 router.get('/follow', auth(), followUser);
 router.get('/unfollow', auth(), unFollowUser);
 router.get('/UserInfo', auth(), fetchUserInfo);
+router.get('/followRequests', auth(), fetchFollowRequests);
+router.post('/followRequests', auth(), updateFollowRequest);
 
 export default router;

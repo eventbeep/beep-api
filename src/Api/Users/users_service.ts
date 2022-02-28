@@ -145,13 +145,107 @@ const fetchCollegeInfo = async (db: Db, userId: ObjectId) => {
 };
 
 const followUser = async (db: Db, userId: ObjectId, tofollowId: ObjectId) => {
-  await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $push: { followers: userId } });
-  await db.collection(COL.Users).updateOne({ _id: userId }, { $push: { following: tofollowId } });
+  let tofollowuser: any = await db
+    .collection(COL.Users)
+    .findOne({ _id: tofollowId }, { projection: { _id: 1, public: 1, followers: 1 } });
+  let followinguser: any = await db
+    .collection(COL.Users)
+    .findOne({ _id: userId }, { projection: { _id: 1, public: 1, following: 1 } });
+  if (tofollowuser.public) {
+    await db.collection(COL.Followers).insertOne({
+      timestamp: moment().format(),
+      User: tofollowId,
+      follower: userId,
+    });
+
+    await db.collection(COL.Users).updateOne({ _id: userId }, { $set: { following: followinguser.following + 1 } });
+    await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $set: { followers: tofollowuser.followers + 1 } });
+  } else {
+    await db.collection(COL.FollowRequests).insertOne({
+      User: tofollowId,
+      follower: userId,
+      status: 'Pending',
+      timestamp: moment().format(),
+    });
+  }
 };
 
 const unFollowUser = async (db: Db, userId: ObjectId, tofollowId: ObjectId) => {
-  await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $pull: { followers: userId } });
-  await db.collection(COL.Users).updateOne({ _id: userId }, { $pull: { following: tofollowId } });
+  let tofollowuser: any = await db
+    .collection(COL.Users)
+    .findOne({ _id: tofollowId }, { projection: { _id: 1, followers: 1 } });
+  let followinguser: any = await db
+    .collection(COL.Users)
+    .findOne({ _id: userId }, { projection: { _id: 1, public: 1, following: 1 } });
+  await db.collection(COL.Followers).deleteOne({
+    User: tofollowId,
+    follower: userId,
+  });
+
+  await db.collection(COL.Users).updateOne({ _id: userId }, { $set: { following: followinguser.following - 1 } });
+  await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $set: { followers: tofollowuser.followers - 1 } });
+};
+
+const fetchFollowRequests = async (db: Db, userId: ObjectId, skip: number) => {
+  console.log(userId);
+  let requests = await db
+    .collection(COL.FollowRequests)
+    .aggregate([
+      { $match: { User: userId } },
+      {
+        $lookup: {
+          from: 'Users',
+          localField: 'follower',
+          foreignField: '_id',
+          as: 'userDetails',
+        },
+      },
+      {
+        $project: {
+          'userDetails._id': 1,
+          'userDetails.personalInfo.name': 1,
+          'userDetails.personalInfo.avatar': 1,
+          status: 1,
+          timeStamp: 1,
+        },
+      },
+      { $sort: { _id: 1 } },
+      { $skip: 0 },
+      { $limit: 10 },
+    ])
+    .toArray();
+
+  return requests;
+};
+
+const updateFollowRequest = async (db: Db, userId: ObjectId, requestId: ObjectId, accepted: boolean) => {
+  let request: any = await db.collection(COL.FollowRequests).findOne({ _id: requestId });
+  console.log(userId);
+  console.log(request);
+  if (request.User.toString() === userId.toString()) {
+    if (accepted) {
+      await db
+        .collection(COL.Followers)
+        .insertOne({ User: request.User, follower: request.follower, timeStamp: moment().format() });
+      let tofollowuser: any = await db
+        .collection(COL.Users)
+        .findOne({ _id: request.User }, { projection: { _id: 1, public: 1, followers: 1 } });
+      let followinguser: any = await db
+        .collection(COL.Users)
+        .findOne({ _id: request.follower }, { projection: { _id: 1, public: 1, following: 1 } });
+      await db
+        .collection(COL.Users)
+        .updateOne({ _id: request.follower }, { $set: { following: followinguser.following + 1 } });
+      await db.collection(COL.Users).updateOne({ _id: request.User }, { $set: { followers: tofollowuser.followers + 1 } });
+    }
+    await db.collection(COL.FollowRequests).deleteOne({ _id: requestId });
+  } else {
+    throw {
+      status: 400,
+      code: 'Update Permission Denied',
+      message: 'User cannot update this Follow Request',
+    };
+  }
 };
 
 const fetchUserInfo = async (db: Db, reqUser: ObjectId, targetUser: ObjectId) => {
@@ -168,13 +262,10 @@ const fetchUserInfo = async (db: Db, reqUser: ObjectId, targetUser: ObjectId) =>
     }
   );
   targetUserData.posts = [];
-  targetUserData.followed = false;
-  let reqUserString = reqUser.toString();
-  for (let index = 0; index < targetUserData.followers.length; index++) {
-    if (targetUserData.followers.toString() === reqUserString) {
-      targetUserData.followed = true;
-      break;
-    }
+  if (await db.collection(COL.Followers).findOne({ User: targetUser, follower: reqUser })) {
+    targetUserData.followed = true;
+  } else {
+    targetUserData.followed = false;
   }
   if (targetUserData.public || targetUserData.followed) {
     const posts = await db.collection(COL.Posts).find({ postedBy: targetUser }).sort({ _id: -1 }).limit(10).toArray();
@@ -198,4 +289,6 @@ export default {
   followUser,
   unFollowUser,
   fetchUserInfo,
+  fetchFollowRequests,
+  updateFollowRequest,
 };
