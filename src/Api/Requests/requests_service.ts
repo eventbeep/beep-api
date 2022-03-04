@@ -15,7 +15,7 @@ const verificationviaEmail = async (db: Db, userid: ObjectId, email: string) => 
       $and: [
         { _id: userid },
         {
-          $or: [{ status: 'College Info Set' }, { status: 'Verification Request Declined' }],
+          $or: [{ status: 'College Info Verification' }, { status: 'Verification Request Declined' }],
         },
       ],
     },
@@ -189,7 +189,7 @@ const updateRequest = async (db: Db, reqId: string, accepted: boolean, reason: s
               passout: request.passout,
               verified: false,
             },
-            status: 'College Info Set',
+            status: 'College Info Verification',
           },
         }
       );
@@ -202,11 +202,11 @@ const updateRequest = async (db: Db, reqId: string, accepted: boolean, reason: s
           $set: {
             collegeInfo: {
               collegeId: request.collegeId,
-              stream: request.stream,
+              streams: request.stream,
               passout: request.passout,
               verified: false,
             },
-            status: 'College Info Set',
+            status: 'College Info Verification',
           },
         }
       );
@@ -287,7 +287,7 @@ const verificationviaId = async (db: Db, userid: ObjectId, file: any) => {
         $and: [
           { _id: userid },
           {
-            $or: [{ status: 'College Info Set' }, { status: 'Verification Request Declined' }],
+            $or: [{ status: 'College Info Verification' }, { status: 'Verification Request Declined' }],
           },
         ],
       },
@@ -349,6 +349,15 @@ const verificationviaId = async (db: Db, userid: ObjectId, file: any) => {
     };
   }
 };
+
+const getColleges = async(db:Db)=>{
+  return await db.collection(COL.Colleges).find({},{projection:{_id:1,collegeName:1,alias:1}}).toArray()
+}
+
+const getCourses = async(db:Db,collegeId:ObjectId)=>{
+  const streams:any= await db.collection(COL.Colleges).findOne({_id:collegeId},{projection:{_id:0,streams:1}})
+  return streams.streams
+}
 export default {
   verificationviaEmail,
   newCollegeRequest,
@@ -356,4 +365,6 @@ export default {
   updateRequest,
   verifyEmail,
   verificationviaId,
+  getColleges,
+  getCourses
 };

@@ -20,12 +20,30 @@ export const fetchWallPosts = async (req: any, res: Response) => {
   }
 };
 
+export const fetchMyPosts = async (req: any, res: Response) => {
+  try {
+    const { db } = req.app.locals;
+    let posts = await service.fetchMyPosts(db, req.user._id, req.query.skip ? parseInt(req.query.skip) : 0);
+    res.status(200).send({
+      message: 'Post retrived',
+      ...posts,
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(e.status || 500).send({
+      status: e.status || 500,
+      code: e.status ? e.code : 'UNKNOWN_ERROR',
+      error: e.status ? e.message : 'Something went wrong',
+    });
+  }
+};
+
 export const createPost = async (req: any, res: Response) => {
   try {
     const { db } = req.app.locals;
-    await service.createPost(db, req.body, req.user._id, req.file);
+    service.createPost(db, req.body, req.user._id, req.file);
     res.status(200).send({
-      message: 'Post created',
+      message: 'We will let you know once, the Post is Live',
     });
   } catch (e: any) {
     console.log(e);
@@ -128,6 +146,25 @@ export const deleteComment = async (req: any, res: Response) => {
     await service.deleteComment(db, req.user._id, req.query.postId, ObjectIdWithErrorHandler(req.query.commentId));
     res.status(200).send({
       message: 'Comment Deleted',
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(e.status || 500).send({
+      status: e.status || 500,
+      code: e.status ? e.code : 'UNKNOWN_ERROR',
+      error: e.status ? e.message : 'Something went wrong',
+    });
+  }
+};
+
+
+export const fetchChallenges = async (req: any, res: Response) => {
+  try {
+    const { db } = req.app.locals;
+    let challenge = await service.fetchChallenges(db,req.query.skip ? parseInt(req.query.skip) : 0);
+    res.status(200).send({
+      message: 'Post retrived',
+      challenges:challenge
     });
   } catch (e: any) {
     console.log(e);

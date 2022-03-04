@@ -28,11 +28,12 @@ export const sendOTP = async (req: Request, res: Response) => {
 export const verifyOTP = async (req: Request, res: Response) => {
   try {
     const { db } = req.app.locals;
-    let { success, message, token } = await service.verifyOTP(db, req.body.number, req.body.otp);
+    let { success, message, token, user_status } = await service.verifyOTP(db, req.body.number, req.body.otp);
     if (success) {
       res.status(200).send({
         message: message,
         token: token,
+        user_status:user_status
       });
     } else {
       res.status(400).send({

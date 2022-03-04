@@ -9,6 +9,8 @@ import {
   updateRequest,
   verifyEmail,
   verificationviaId,
+  getColleges,
+  getCourses
 } from './requests_controller';
 
 const router = express.Router();
@@ -19,5 +21,7 @@ router.post('/newCollegeRequest', auth(), newCollegeRequest);
 router.post('/get', adminauth(), getRequests);
 router.post('/update', adminauth(), updateRequest);
 router.get('/verifyEmail', verifyEmail);
+router.get('/getColleges',auth(),getColleges);
+router.get('/getCourses',auth(),getCourses);
 
 export default router;

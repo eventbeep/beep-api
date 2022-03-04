@@ -19,10 +19,10 @@ const sendOTP = async (db: Db, number: string) => {
     await db.collection(COL.Users).insertOne({
       phone_number: number,
       otp: otp,
-      followers: [],
-      following: [],
+      followers: 0,
+      following: 0,
       public: false,
-      status: 'OTP Verification',
+      status: 'Personal Info',
       blocked: false,
     });
   }
@@ -51,12 +51,14 @@ const verifyOTP = async (db: Db, number: string, otp: string) => {
         success: true,
         message: 'OTP Verified',
         token: jwt.sign(JSON.stringify({ _id: user._id }), envVars.AUTH_SECRET),
+        user_status: user.status
       };
     } else {
       return {
         success: false,
         message: 'Invalid OTP',
         token: '',
+        user_status: ''
       };
     }
   } else {
@@ -64,6 +66,7 @@ const verifyOTP = async (db: Db, number: string, otp: string) => {
       success: false,
       message: `No user with Mobile number ${number} exists}`,
       token: '',
+      user_status: ''
     };
   }
 };
@@ -90,7 +93,7 @@ const updatePersonalInfo = async (db: Db, userId: ObjectId, data: any, onboard: 
   if (onboard) {
     await db
       .collection(COL.Users)
-      .findOneAndUpdate({ _id: userId }, { $set: { personalInfo: data, status: 'Personal Info Set' } });
+      .findOneAndUpdate({ _id: userId }, { $set: { personalInfo: data, status: 'College Info' } });
   } else {
     await db.collection(COL.Users).findOneAndUpdate({ _id: userId }, { $set: { personalInfo: data } });
   }
@@ -110,7 +113,7 @@ const updateCollegeInfo = async (db: Db, userId: ObjectId, collegeInfo: any, onb
   if (onboard) {
     await db
       .collection(COL.Users)
-      .findOneAndUpdate({ _id: userId }, { $set: { collegeInfo: collegeInfo, status: 'Onboarded' } });
+      .findOneAndUpdate({ _id: userId }, { $set: { collegeInfo: collegeInfo, status: 'College Info Verification' } });
   } else {
     await db.collection(COL.Users).findOneAndUpdate({ _id: userId }, { $set: { collegeInfo: collegeInfo } });
   }
@@ -118,39 +121,47 @@ const updateCollegeInfo = async (db: Db, userId: ObjectId, collegeInfo: any, onb
 
 const fetchCollegeInfo = async (db: Db, userId: ObjectId) => {
   let collegeInfo: any = await db.collection(COL.Users).findOne({ _id: userId }, { projection: { _id: 0, collegeInfo: 1 } });
-  collegeInfo = collegeInfo['collegeInfo'];
-  if (collegeInfo['requestId']) {
-    let request: any = await db
-      .collection(COL.Requests)
-      .findOne({ _id: collegeInfo['requestId'] }, { projection: { _id: 0, type: 0, raisedBy: 0 } });
-    if (request['collegeId']) {
-      request['collegeName'] = await db
-        .collection(COL.Colleges)
-        .findOne({ _id: collegeInfo['collegeId'] }, { projection: { collegeName: 1 } });
-      delete request['collegeId'];
+  if(collegeInfo['collegeInfo']){
+    collegeInfo = collegeInfo['collegeInfo'];
+    if (collegeInfo['requestId']) {
+      let request: any = await db
+        .collection(COL.Requests)
+        .findOne({ _id: collegeInfo['requestId'] }, { projection: { _id: 0, type: 0, raisedBy: 0 } });
+      if (request['collegeId']) {
+        request['collegeName'] = await db
+          .collection(COL.Colleges)
+          .findOne({ _id: collegeInfo['collegeId'] }, { projection: { collegeName: 1 } });
+        delete request['collegeId'];
+      }
+      delete collegeInfo['requestId'];
+      collegeInfo = { ...collegeInfo, ...request, request: true };
+    } else {
+      collegeInfo = {
+        ...collegeInfo,
+        ...(await db
+          .collection(COL.Colleges)
+          .findOne({ _id: collegeInfo['collegeId'] }, { projection: { _id: 0, collegeName: 1 } })),
+      };
+      delete collegeInfo['collegeId'];
     }
-    delete collegeInfo['requestId'];
-    collegeInfo = { ...collegeInfo, ...request, request: true };
-  } else {
-    collegeInfo = {
-      ...collegeInfo,
-      ...(await db
-        .collection(COL.Colleges)
-        .findOne({ _id: collegeInfo['collegeId'] }, { projection: { _id: 0, collegeName: 1 } })),
-    };
-    delete collegeInfo['collegeId'];
+  
+    return collegeInfo;
   }
-
-  return collegeInfo;
+  else{
+    throw {
+      status: 400,
+      code: 'College Info not Set',
+      message: 'User has not set College Info yet',
+    };
+  }
+  
 };
 
 const followUser = async (db: Db, userId: ObjectId, tofollowId: ObjectId) => {
   let tofollowuser: any = await db
     .collection(COL.Users)
     .findOne({ _id: tofollowId }, { projection: { _id: 1, public: 1, followers: 1 } });
-  let followinguser: any = await db
-    .collection(COL.Users)
-    .findOne({ _id: userId }, { projection: { _id: 1, public: 1, following: 1 } });
+  
   if (tofollowuser.public) {
     await db.collection(COL.Followers).insertOne({
       timestamp: moment().format(),
@@ -158,8 +169,8 @@ const followUser = async (db: Db, userId: ObjectId, tofollowId: ObjectId) => {
       follower: userId,
     });
 
-    await db.collection(COL.Users).updateOne({ _id: userId }, { $set: { following: followinguser.following + 1 } });
-    await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $set: { followers: tofollowuser.followers + 1 } });
+    await db.collection(COL.Users).updateOne({ _id: userId }, { $inc: { following: 1 } });
+    await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $inc: { followers: 1 } });
   } else {
     await db.collection(COL.FollowRequests).insertOne({
       User: tofollowId,
@@ -171,19 +182,14 @@ const followUser = async (db: Db, userId: ObjectId, tofollowId: ObjectId) => {
 };
 
 const unFollowUser = async (db: Db, userId: ObjectId, tofollowId: ObjectId) => {
-  let tofollowuser: any = await db
-    .collection(COL.Users)
-    .findOne({ _id: tofollowId }, { projection: { _id: 1, followers: 1 } });
-  let followinguser: any = await db
-    .collection(COL.Users)
-    .findOne({ _id: userId }, { projection: { _id: 1, public: 1, following: 1 } });
+
   await db.collection(COL.Followers).deleteOne({
     User: tofollowId,
     follower: userId,
   });
 
-  await db.collection(COL.Users).updateOne({ _id: userId }, { $set: { following: followinguser.following - 1 } });
-  await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $set: { followers: tofollowuser.followers - 1 } });
+  await db.collection(COL.Users).updateOne({ _id: userId }, { $inc: { following: - 1 } });
+  await db.collection(COL.Users).updateOne({ _id: tofollowId }, { $inc: { followers: - 1 } });
 };
 
 const fetchFollowRequests = async (db: Db, userId: ObjectId, skip: number) => {
@@ -268,7 +274,7 @@ const fetchUserInfo = async (db: Db, reqUser: ObjectId, targetUser: ObjectId) =>
     targetUserData.followed = false;
   }
   if (targetUserData.public || targetUserData.followed) {
-    const posts = await db.collection(COL.Posts).find({ postedBy: targetUser }).sort({ _id: -1 }).limit(10).toArray();
+    const posts = await db.collection(COL.Posts).find({ createdBy: targetUser , status:'Active'}).sort({ _id: -1 }).limit(10).toArray();
     targetUserData.posts = posts;
   }
 

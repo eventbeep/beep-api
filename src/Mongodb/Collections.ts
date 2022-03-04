@@ -5,6 +5,7 @@ export const COL = {
   AdminUsers: 'Admin Users',
   Posts: 'Posts',
   ChallengeInfo: 'Challenge Info',
+  ChallengeTopPerformer: 'Challenge Top Performer',
   PostComments: 'Post Comments',
   Followers: 'Followers',
   CommentThreads: '',

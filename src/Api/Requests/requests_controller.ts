@@ -1,4 +1,5 @@
 import { response, Response } from 'express';
+import { ObjectIdWithErrorHandler } from '../../Mongodb/helpers';
 import service from './requests_service';
 
 export const verificationviaEmail = async (req: any, res: Response) => {
@@ -112,6 +113,42 @@ export const verificationviaId = async (req: any, res: Response) => {
         message: message,
       });
     }
+  } catch (e: any) {
+    console.log(e);
+    res.status(e.status || 500).send({
+      status: e.status || 500,
+      code: e.status ? e.code : 'UNKNOWN_ERROR',
+      error: e.status ? e.message : 'Something went wrong',
+    });
+  }
+};
+
+export const getColleges = async (req: any, res: Response) => {
+  try {
+    const { db } = req.app.locals;
+    let colleges = await service.getColleges(db);
+    res.status(200).send({
+      message: 'College Info Retrieved',
+      colleges:colleges
+    });
+  } catch (e: any) {
+    console.log(e);
+    res.status(e.status || 500).send({
+      status: e.status || 500,
+      code: e.status ? e.code : 'UNKNOWN_ERROR',
+      error: e.status ? e.message : 'Something went wrong',
+    });
+  }
+};
+
+export const getCourses= async (req: any, res: Response) => {
+  try {
+    const { db } = req.app.locals;
+    let courses = await service.getCourses(db,ObjectIdWithErrorHandler(req.query.collegeId));
+    res.status(200).send({
+      message: 'Courses Info Retrieved',
+      courses:courses
+    });
   } catch (e: any) {
     console.log(e);
     res.status(e.status || 500).send({

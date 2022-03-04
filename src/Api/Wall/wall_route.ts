@@ -10,6 +10,8 @@ import {
   addComment,
   editComment,
   deleteComment,
+  fetchChallenges,
+  fetchMyPosts
 } from './wall_controller';
 
 const router = express.Router();
@@ -24,5 +26,7 @@ router.delete('/like', auth());
 router.post('/comment', auth(), addComment);
 router.delete('/comment', auth(), deleteComment);
 router.put('/comment', auth(), editComment);
+router.get('/challenge', auth(), fetchChallenges);
+router.get('/mywall', auth(), fetchMyPosts);
 
 export default router;
