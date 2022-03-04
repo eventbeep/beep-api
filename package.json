@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.ts",
   "scripts": {
-    "start": "ts-node app.ts",
+    "start": "ts-node --optimize_for_size --max_old_space_size=460 app.ts",
     "dev": "nodemon app.ts",
     "lint": "eslint **/*.ts",
     "lint:fix": "eslint **/*.ts --fix",
